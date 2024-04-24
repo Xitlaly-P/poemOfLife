@@ -128,14 +128,17 @@ class board:
         count = 1
         self.words = self.load_words()  # Load words from the text file
 
-        # generate 2D Board 10 X 10
+        # Inside the __init__ method of the board class
         for i in range(0, 10):
             temp = []
             for j in range(0, 10):
                 x = j * 60
                 y = i * 60
-                word = random.choice(self.words)  # Select a random word from the list
-                temp.append((x, y, count, word))  # Include word in tile info
+                if random.randint(1, 100) <= 5:  # 5% chance for a wildcard
+                    word = "WILDCARD"
+                else:
+                    word = random.choice(self.words)
+                temp.append((x, y, count, word))
                 count += 1
             self.boardarr.append(temp)
 
@@ -146,33 +149,36 @@ class board:
         return [word.strip() for word in words]
 
     def draw(self):
-        #stufff
+        # Inside the draw method of the board class
         for i in self.boardarr:
             for j in i:
                 if int(j[2]) % 2 == 0:
                     colorb = boardclr
                 else:
                     colorb = boardclr2
-
+                    
                 pygame.draw.rect(gameDisplay, (colorb), (j[0], j[1], 59, 59))
 
                 # Adjust font size based on word length
-                if len(j[3]) > 8:  # You can adjust this threshold as needed
-                    smallText = pygame.font.SysFont("comicsansms", 8)  # Decrease font size
-                    truncated_word = j[3][:7] + "..."  # Truncate word and add "..."
+                
+                if len(j[3]) > 8:
+                    smallText = pygame.font.SysFont("comicsansms", 8)
+                    display_word = j[3][:7] + "..."
                 else:
-                    smallText = pygame.font.SysFont("comicsansms", 10)  # Default font size
-                    truncated_word = j[3]
+                    smallText = pygame.font.SysFont("comicsansms", 10)
+                    display_word = j[3]
 
-                textSurf, textRect = text_objects(truncated_word, smallText, darkback)
+                textSurf, textRect = text_objects(display_word, smallText, darkback)
                 textRect.center = ((j[0] + (60 // 2)), (j[1] + (60 // 2)))
                 gameDisplay.blit(textSurf, textRect)
+
 
 
 
 # player class
 class player:
     def __init__(self, B, clr):
+        self.load_words()
         self.val = 100
         self.xpos = None
         self.ypos = None
@@ -185,7 +191,10 @@ class player:
                 if self.val == y[2]:
                     self.xpos = y[0]
                     self.ypos = y[1]
-
+    def load_words(self):
+        with open('words.txt', 'r') as f:
+            self.words = f.readlines()
+        self.words = [word.strip() for word in self.words]
     def move(self, no):
         if self.val - no > 0:
             self.val -= no
@@ -196,13 +205,34 @@ class player:
                 if self.val == y[2]:
                     self.xpos = y[0]
                     self.ypos = y[1]
-                    self.collected_words.append(y[3])  # Add the word of the current tile to collected_words
+                    if y[3] == "WILDCARD":
+                        action = random.choice(["ADD", "REMOVE"])
+                        if action == "ADD":
+                            added_words = []
+                            for _ in range(3):
+                                word = random.choice(self.words)
+                                self.collected_words.append(word)
+                                added_words.append(word)
+                            # Display message for added words
+                            self.display_message(f"WILDCARD: Extra words added")
+                        elif action == "REMOVE" and self.collected_words:
+                            if len(self.collected_words) >= 1:
+                                self.collected_words.pop()  # Remove the last collected word
+                            self.display_message("WILDCARD: Word removed")
+                    else:
+                        self.collected_words.append(y[3])# Add the word of the current tile to collected_words
                     print(f"Appended word: {y[3]}")
         if self.val == 1:
             print("+=+" * 10 + " YOU WIN " + "+=+" * 10)
             global DONE1
             DONE1 = True
-
+    def display_message(self, message):
+        # Display the message at the bottom right corner
+        smallText = pygame.font.SysFont("comicsansms", 15)
+        textSurf, textRect = text_objects(message, smallText, darkback)
+        textRect.bottomright = (display_width - 10, display_height - 10)
+        gameDisplay.blit(textSurf, textRect)
+        pygame.display.update()
     def draw(self):
         pygame.draw.circle(gameDisplay, (self.clr), (self.xpos + 30, self.ypos + 30), self.size)
 
