@@ -172,9 +172,6 @@ class board:
                 textRect.center = ((j[0] + (60 // 2)), (j[1] + (60 // 2)))
                 gameDisplay.blit(textSurf, textRect)
 
-
-
-
 # player class
 class player:
     def __init__(self, B, clr):
@@ -214,7 +211,7 @@ class player:
                                 self.collected_words.append(word)
                                 added_words.append(word)
                             # Display message for added words
-                            self.display_message(f"WILDCARD: Extra words added")
+                            self.display_message("WILDCARD: Extra words added")
                         elif action == "REMOVE" and self.collected_words:
                             if len(self.collected_words) >= 1:
                                 self.collected_words.pop()  # Remove the last collected word
